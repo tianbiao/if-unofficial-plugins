@@ -30,9 +30,14 @@ export class GcpAPI {
     };
     const [timeSeries] = await monitorClient.listTimeSeries(request);
 
+    const instanceMetricArray: any[] = [];
     console.log('Found data points for the following instances:');
     timeSeries.forEach(data => {
       console.log(data);
+
+      const instanceName: any = data.metric?.labels?.instance_name;
+      const metricsType: any = data.metric?.type;
+
       if (data && data.points) {
         data.points.forEach(point => {
           console.log(
@@ -40,9 +45,17 @@ export class GcpAPI {
               point.value
             )}`
           );
+          instanceMetricArray.push({
+            instanceName,
+            metricsType,
+            startTime: point.interval?.startTime?.seconds,
+            endTime: point.interval?.endTime?.seconds,
+            value: point.value?.doubleValue,
+          });
         });
       }
     });
-    return [];
+
+    return instanceMetricArray;
   }
 }
