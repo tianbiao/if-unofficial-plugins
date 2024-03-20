@@ -35,15 +35,19 @@ export class GcpAPI {
 
       const instanceName: any = data.metric?.labels?.instance_name;
       const metricsType: any = data.metric?.type;
+      const instanceId: any = data.resource?.labels?.instance_id;
+      const zone: any = data.resource?.labels?.zone;
 
       if (data && data.points) {
         data.points.forEach(point => {
           instanceMetricArray.push({
             instanceName,
+            instanceId,
+            zone,
             metricsType,
             startTime: point.interval?.startTime?.seconds,
             endTime: point.interval?.endTime?.seconds,
-            value: point.value?.doubleValue,
+            value: point.value?.doubleValue || point.value?.int64Value,
           });
         });
       }

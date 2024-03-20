@@ -52,8 +52,19 @@ export const GcpImporter = (): PluginInterface => {
    */
   const enrichOutputs = (rawResults: any, input: PluginParams) => {
     return rawResults.map((row: any) => ({
-      ...row,
+      'cloud/vendor': 'gcp',
+      'cloud/instance-type': 'e2-medium',
+      'cpu/utilization': row.cpuUtilization,
+      'memory/total/GB': parseFloat(row.ramTotal) * 1e-9,
+      'memory/used/GB': parseFloat(row.ramUsed) * 1e-9,
+      'memory/utilization':
+        row.ramTotal > 0
+          ? (parseFloat(row.ramTotal) - parseFloat(row.ramUsed)) /
+            parseFloat(row.ramTotal)
+          : 0,
+      location: row.zone,
       ...input,
+      timestamp: new Date(parseInt(row.startTime) * 1000).toISOString(),
     }));
   };
 
@@ -114,7 +125,28 @@ export const GcpImporter = (): PluginInterface => {
     console.log('ramTotalMetrics', ramTotalMetrics.length);
     console.log('ramUsedMetrics', ramUsedMetrics.length);
 
-    return cpuMetrics.concat(ramTotalMetrics, ramUsedMetrics);
+    cpuMetrics.map(cpuData => {
+      const ramTotal = ramTotalMetrics.find(
+        ramTotalData =>
+          ramTotalData.instanceName === cpuData.instanceName &&
+          ramTotalData.startTime === cpuData.startTime &&
+          ramTotalData.endTime === cpuData.endTime
+      );
+      cpuData['ramTotal'] = ramTotal ? ramTotal.value : 0;
+
+      const ramUsed = ramUsedMetrics.find(
+        ramUsedData =>
+          ramUsedData.instanceName === cpuData.instanceName &&
+          ramUsedData.startTime === cpuData.startTime &&
+          ramUsedData.endTime === cpuData.endTime
+      );
+      cpuData['ramUsed'] = ramUsed ? ramUsed.value : 0;
+      cpuData['cpuUtilization'] = cpuData.value;
+    });
+
+    console.log('cpuMetrics', cpuMetrics);
+
+    return cpuMetrics;
   };
 
   /**
