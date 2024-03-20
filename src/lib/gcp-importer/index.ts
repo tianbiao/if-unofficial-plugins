@@ -62,10 +62,9 @@ export const GcpImporter = (): PluginInterface => {
    */
   const mapInputToGcpInputs = (input: PluginParams): GcpInputs => {
     return {
-      vmName: input['gcp-vm-name'],
+      projectId: input['gcp-project-id']!,
       timestamp: input['timestamp']!,
-      duration: input['duration'].toString(),
-      timespan: getTimeSpan(input['duration'], input['timestamp']!),
+      duration: input['duration']!,
     };
   };
 
@@ -108,12 +107,12 @@ export const GcpImporter = (): PluginInterface => {
    * Retrieves virtual machine usage metrics from Azure based on the provided AzureInputs.
    */
   const getVmUsage = async (metricParams: GcpInputs): Promise<any[]> => {
-    // parseMetrics(getRawTotalMetrics(metricParams), memAvailable, '');
-    // parseMetrics(getRawUsedMetrics(metricParams), memAvailable, '');
     const cpuMetrics = await getCPUMetrics(metricParams);
     const ramTotalMetrics = await getRamTotalMetrics(metricParams);
     const ramUsedMetrics = await getRamUsedMetrics(metricParams);
     console.log('getVmUsage', cpuMetrics.length);
+    console.log('ramTotalMetrics', ramTotalMetrics.length);
+    console.log('ramUsedMetrics', ramUsedMetrics.length);
 
     return cpuMetrics.concat(ramTotalMetrics, ramUsedMetrics);
   };
@@ -146,16 +145,6 @@ export const GcpImporter = (): PluginInterface => {
       metricParams,
       'instance/memory/balloon/ram_used'
     );
-  };
-
-  /**
-   * Takes manifest `timestamp` and `duration` and returns an Azure formatted `timespan` value.
-   */
-  const getTimeSpan = (duration: number, timestamp: string): string => {
-    const start = new Date(timestamp);
-    const end = new Date(start.getTime() + duration * 1000);
-
-    return `${start.toISOString()}/${end.toISOString()}`;
   };
 
   /**

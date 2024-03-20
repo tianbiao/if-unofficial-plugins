@@ -5,15 +5,15 @@ export type GcpOutputs = {
 };
 
 export type GcpInputs = {
-  vmName: string;
-  timespan: string;
+  projectId: string;
   timestamp: string;
-  duration: string;
+  duration: number;
 };
 
 export type GetMetricsParams = {
-  timespan: string;
-  vmName: string;
+  projectId: string;
+  timestamp: string;
+  duration: number;
 };
 
 export type GcpMetadataOutputs = {
