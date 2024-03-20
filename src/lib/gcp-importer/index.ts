@@ -111,9 +111,11 @@ export const GcpImporter = (): PluginInterface => {
     // parseMetrics(getRawTotalMetrics(metricParams), memAvailable, '');
     // parseMetrics(getRawUsedMetrics(metricParams), memAvailable, '');
     const cpuMetrics = await getCPUMetrics(metricParams);
+    const ramTotalMetrics = await getRamTotalMetrics(metricParams);
+    const ramUsedMetrics = await getRamUsedMetrics(metricParams);
     console.log('getVmUsage', cpuMetrics.length);
 
-    return cpuMetrics;
+    return cpuMetrics.concat(ramTotalMetrics, ramUsedMetrics);
   };
 
   /**
@@ -127,24 +129,24 @@ export const GcpImporter = (): PluginInterface => {
   };
 
   /**
-   * Gets RAW Total metrics by calling monitor client.
+   * Gets RAM Total metrics by calling monitor client.
    */
-  // const getRawTotalMetrics = async (metricParams: GetMetricsParams) => {
-  //   return gcpAPI.getMetricsTimeseries(
-  //     metricParams,
-  //     'instance/memory/balloon/ram_size'
-  //   );
-  // };
+  const getRamTotalMetrics = async (metricParams: GetMetricsParams) => {
+    return gcpAPI.getMetricsTimeseries(
+      metricParams,
+      'instance/memory/balloon/ram_size'
+    );
+  };
 
   /**
-   * Gets RAW Used metrics by calling monitor client.
+   * Gets RAM Used metrics by calling monitor client.
    */
-  // const getRawUsedMetrics = async (metricParams: GetMetricsParams) => {
-  //   return gcpAPI.getMetricsTimeseries(
-  //     metricParams,
-  //     'instance/memory/balloon/ram_used'
-  //   );
-  // };
+  const getRamUsedMetrics = async (metricParams: GetMetricsParams) => {
+    return gcpAPI.getMetricsTimeseries(
+      metricParams,
+      'instance/memory/balloon/ram_used'
+    );
+  };
 
   /**
    * Takes manifest `timestamp` and `duration` and returns an Azure formatted `timespan` value.
