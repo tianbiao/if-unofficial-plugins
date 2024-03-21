@@ -7,20 +7,28 @@ The GCP importer plugin allows you to provide some basic details about an Azure 
 ## Prerequisites
 
 ### 1. Create a Google Compute Engine VM instance
+Create a GCP project and follow the guide of creating a compute engine vm instance https://cloud.google.com/compute/docs/instances/create-start-instance#console
 
+### 2. Create a service account to access Google Compute Engine instance metadata and Google Monitoring metrics
+Create a service account and grant some roles for the service account to access GCP resources when running if manifest file.
 
-### 2. Provide an identity to access VM metadata and metrics
-
+[crate service account](https://cloud.google.com/iam/docs/service-accounts-create)
 
 ### 3. Provide IAM access
+Follow this [guide](https://cloud.google.com/iam/docs/manage-access-service-accounts) to grant below roles to the service account
+```text
+Compute Viewer
+Monitoring Viewer
+```
 
+Create a service account key and download the json file to your local laptop.
 
 ### 4. Add credentials to `.env`
 
 Create a `.env` file in the IF project root directory. This is where you can store your Azure authentication details. Your `.env` file should look as follows:
 
 ```txt
-
+GOOGLE_APPLICATION_CREDENTIALS: <Path to your service account key>
 ```
 
 ## Node config
@@ -44,6 +52,8 @@ initialize:
     gcp-importer:
       method: GcpImporter
       path: '@grnsft/if-unofficial-plugins'
+  outputs:
+    - yaml
 tree:
   children:
     child:
@@ -51,50 +61,48 @@ tree:
         - gcp-importer
       config:
         gcp-importer:
-          gcp-project-id: my_project_id
+          gcp-project-id: 'carbon-hack-2024'
       inputs:
-        - timestamp: '2024-03-17T10:35:31.820Z'
-          duration: 3600
+        - timestamp: '2024-03-21T01:48:39.691Z'
+          duration: 120
 ```
 
-This will grab GCP metrics for `my_project_id` for one-hour period beginning at 10:35 UTC on 17th March 2024
+This will grab GCP metrics for `carbon-hack-2024` for 120 seconds period
 
 ## Outputs
 
 The GCP importer plugin will enrich your `manifest` with the following data:
 
-- `duration`: the per-input duration in seconds
+- `cloud/vendor`: the cloud vendor, hardcoded to 'gcp'
+- `cloud/instance-type`: the instance type of vm instance e.g. e2-small
+- `cloud/cpu-platform`: the cpu platform of vm instance
+- `cloud/instance-name`: the name of vm instance
+- `cloud/instance-id`: the id of vm instance
+- `cloud/zone`: the zone of vm instance
 - `cpu/utilization`: percentage CPU utilization
-- `cloud/instance-type`: VM instance name
-- `location`: VM region
 - `memory/total/GB`: Memory currently used in the VM. This metric is only available for VMs that belong to the e2 family. Sampled every 60 seconds. After sampling, data is not visible for up to 240 seconds.
 - `memory/used/GB`: The total amount of memory in the VM. This metric is only available for VMs that belong to the e2 family. Sampled every 60 seconds. After sampling, data is not visible for up to 240 seconds.
 - `memory/utilization`: memory utilized, expressed as a percentage (`memory/used/GB`/`memory/capacity/GB` * 100)
 
-These can be used as inputs in other plugins in the pipeline. Typically, the `instance-type` can be used to obtain `tdp-finder` data that can then, along with `cpu/utilization`, feed a plugin such as `teads-curve`.
+These can be used as inputs in other plugins in the pipeline. Typically, the `instance-type` can be used to obtain `tdp-finder` data that can then, along with `cpu/utilization`, feed a plugin such as `ccf`.
 
 The outputs look as follows:
 
 ```yaml
 outputs:
-  - timestamp: '2023-11-02T10:35:00.000Z'
-    duration: 300
-    cpu/utilization: '0.314'
-    memory/available/GB: 0.488636416
-    memory/used/GB: 0.5113635839999999
-    memory/capacity/GB: '1'
-    memory/utilization: 51.13635839999999
-    location: uksouth
-    cloud/instance-type: Standard_B1s
-  - timestamp: '2023-11-02T10:40:00.000Z'
-    duration: 300
-    cpu/utilization: '0.314'
-    memory/available/GB: 0.48978984960000005
-    memory/used/GB: 0.5102101504
-    memory/capacity/GB: '1'
-    memory/utilization: 51.021015039999995
-    location: uksouth
-    cloud/instance-type: Standard_B1s
+  - cloud/vendor: gcp
+    cloud/instance-type: e2-small
+    cloud/cpu-platform: Intel Broadwell
+    cloud/instance-name: carbon-hack-instance-e2-small
+    cloud/instance-id: '2210815774305955705'
+    cloud/zone: zones/us-central1-a
+    cpu/utilization: 0.003803976554200557
+    memory/total/GB: 2.0767006720000003
+    memory/used/GB: 0.34238464
+    memory/utilization: 0.8351304814331952
+    timestamp: '2024-03-21T01:50:00.000Z'
+    duration: 60
+    gcp-project-id: carbon-hack-2024
 ```
 
 You can run this example `manifest` by saving it as `./examples/manifests/test/gcp-importer.yml` and executing the following command from the project root:

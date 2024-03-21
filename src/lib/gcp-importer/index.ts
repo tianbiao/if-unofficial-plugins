@@ -77,7 +77,7 @@ export const GcpImporter = (): PluginInterface => {
             'cloud/cpu-platform': vmInstance.cpuPlatform,
             'cloud/instance-name': vmInstance.instanceName,
             'cloud/instance-id': vmInstance.instanceId,
-            'cloud/zone': vmInstance.zone,
+            'cloud/zone': row.zone,
             'cpu/utilization': row.cpuUtilization,
             'memory/total/GB': row.ramTotal * 1e-9,
             'memory/used/GB': row.ramUsed * 1e-9,
