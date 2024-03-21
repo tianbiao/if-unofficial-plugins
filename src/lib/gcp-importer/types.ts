@@ -1,9 +1,3 @@
-export type GcpOutputs = {
-  timestamps: string[];
-  cpuUtilizations: string[];
-  memAvailable: string[];
-};
-
 export type GcpInputs = {
   projectId: string;
   timestamp: string;
@@ -16,8 +10,32 @@ export type GetMetricsParams = {
   duration: number;
 };
 
-export type GcpMetadataOutputs = {
-  location: string;
-  instanceType: string;
-  totalMemoryGB: string;
+export type GcpVmInstanceOutputs = {
+  zone: string;
+  instanceName: string;
+  instanceId: string;
+  machineType: string;
+  cpuPlatform: string;
+};
+
+export type GcpMetricsOutputs = {
+  instanceName: string;
+  instanceId: string;
+  zone: string;
+  metricsType: string;
+  startTime: number;
+  endTime: number;
+  value: number;
+};
+
+export type GcpVmUsageOutputs = {
+  instanceName: string;
+  instanceId: string;
+  zone: string;
+  metricsType: string;
+  startTime: number;
+  endTime: number;
+  ramTotal: number;
+  ramUsed: number;
+  cpuUtilization: number;
 };

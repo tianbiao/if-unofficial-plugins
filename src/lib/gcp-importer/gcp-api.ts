@@ -1,17 +1,19 @@
 import {MetricServiceClient} from '@google-cloud/monitoring';
 import compute from '@google-cloud/compute';
-import {GetMetricsParams} from './types';
+import {
+  GcpMetricsOutputs,
+  GcpVmInstanceOutputs,
+  GetMetricsParams,
+} from './types';
 
 export class GcpAPI {
   /**
-   * Fetches metrics for a specific virtual machine.
+   * Fetches metrics for a specific metric type from a specific gcp project.
    */
   public async getMetricsTimeseries(
     params: GetMetricsParams,
     metricType: string
-  ) {
-    console.log(`getMetricsTimeseries metricType: ${metricType}`);
-
+  ): Promise<GcpMetricsOutputs[]> {
     const monitorClient = new MetricServiceClient();
     const projectId = params.projectId;
 
@@ -32,14 +34,12 @@ export class GcpAPI {
 
     const instanceMetricArray: any[] = [];
     timeSeries.forEach(data => {
-      console.log('timeSeries data: ', data);
-
       const instanceName: any = data.metric?.labels?.instance_name;
       const metricsType: any = data.metric?.type;
       const instanceId: any = data.resource?.labels?.instance_id;
       const zone: any = data.resource?.labels?.zone;
 
-      if (data && data.points) {
+      if (data && instanceId && data.points) {
         data.points.forEach(point => {
           instanceMetricArray.push({
             instanceName,
@@ -57,7 +57,12 @@ export class GcpAPI {
     return instanceMetricArray;
   }
 
-  public async listAllInstances(projectId: string) {
+  /**
+   * Fetches all vm instance from a specific gcp project.
+   */
+  public async getAllComputeEngineInstances(
+    projectId: string
+  ): Promise<GcpVmInstanceOutputs[]> {
     const instancesClient = new compute.InstancesClient();
 
     const aggListRequest = instancesClient.aggregatedListAsync({
@@ -69,9 +74,7 @@ export class GcpAPI {
       const instances = instancesObject.instances;
 
       if (instances && instances.length > 0) {
-        console.log(` ${zone}`);
         for (const instance of instances) {
-          console.log(` - ${instance.id} (${instance.machineType})`);
           instanceArray.push({
             zone,
             instanceName: instance.name,
