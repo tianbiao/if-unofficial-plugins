@@ -1,4 +1,5 @@
 import {MetricServiceClient} from '@google-cloud/monitoring';
+import compute from '@google-cloud/compute';
 import {GetMetricsParams} from './types';
 
 export class GcpAPI {
@@ -54,5 +55,34 @@ export class GcpAPI {
     });
 
     return instanceMetricArray;
+  }
+
+  public async listAllInstances(projectId: string) {
+    const instancesClient = new compute.InstancesClient();
+
+    const aggListRequest = instancesClient.aggregatedListAsync({
+      project: projectId,
+    });
+
+    const instanceArray: any[] = [];
+    for await (const [zone, instancesObject] of aggListRequest) {
+      const instances = instancesObject.instances;
+
+      if (instances && instances.length > 0) {
+        console.log(` ${zone}`);
+        for (const instance of instances) {
+          console.log(` - ${instance.id} (${instance.machineType})`);
+          instanceArray.push({
+            zone,
+            instanceName: instance.name,
+            instanceId: instance.id,
+            machineType: instance.machineType?.split('/').pop(),
+            cpuPlatform: instance.cpuPlatform,
+          });
+        }
+      }
+    }
+
+    return instanceArray;
   }
 }

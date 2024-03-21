@@ -35,10 +35,14 @@ export const GcpImporter = (): PluginInterface => {
       );
       const gcpInput = mapInputToGcpInputs(mergedWithConfig);
       const rawResults = await getVmUsage(gcpInput);
-      // const rawMetadataResults = await getInstanceMetadata();
+      const rawMetadataResults = await getInstanceMetadata(gcpInput.projectId);
       mergedWithConfig['duration'] = 60; //Compute Engine metrics are collected every minute
 
-      enrichedOutputsArray = enrichOutputs(rawResults, mergedWithConfig);
+      enrichedOutputsArray = enrichOutputs(
+        rawResults,
+        rawMetadataResults,
+        mergedWithConfig
+      );
     }
 
     console.log('enrichedOutputsArray: ', enrichedOutputsArray.length);
@@ -50,10 +54,22 @@ export const GcpImporter = (): PluginInterface => {
    * Enriches the raw output and metadata results with additional information
    * and maps them to a new structure based on the PluginParams input.
    */
-  const enrichOutputs = (rawResults: any, input: PluginParams) => {
+  const enrichOutputs = (
+    rawResults: any,
+    rawMetadataResults: any,
+    input: PluginParams
+  ) => {
     return rawResults.map((row: any) => ({
       'cloud/vendor': 'gcp',
-      'cloud/instance-type': 'e2-medium',
+      'cloud/instance-type': rawMetadataResults.find(
+        (item: any) => item.instanceId === row.instanceId
+      ).machineType,
+      'cloud/cpu-platform': rawMetadataResults.find(
+        (item: any) => item.instanceId === row.instanceId
+      ).cpuPlatform,
+      'cloud/instance-name': row.instanceName,
+      'cloud/instance-id': row.instanceId,
+      'cloud/zone': row.zone,
       'cpu/utilization': row.cpuUtilization,
       'memory/total/GB': parseFloat(row.ramTotal) * 1e-9,
       'memory/used/GB': parseFloat(row.ramUsed) * 1e-9,
@@ -62,7 +78,6 @@ export const GcpImporter = (): PluginInterface => {
           ? (parseFloat(row.ramTotal) - parseFloat(row.ramUsed)) /
             parseFloat(row.ramTotal)
           : 0,
-      location: row.zone,
       ...input,
       timestamp: new Date(parseInt(row.startTime) * 1000).toISOString(),
     }));
@@ -144,8 +159,6 @@ export const GcpImporter = (): PluginInterface => {
       cpuData['cpuUtilization'] = cpuData.value;
     });
 
-    console.log('cpuMetrics', cpuMetrics);
-
     return cpuMetrics;
   };
 
@@ -182,13 +195,9 @@ export const GcpImporter = (): PluginInterface => {
   /**
    * Gathers instance metadata.
    */
-  // const getInstanceMetadata = async (): Promise<GcpMetadataOutputs> => {
-  //   return {
-  //     location: 'location',
-  //     instanceType: 'instanceType',
-  //     totalMemoryGB: 'totalMemoryGB',
-  //   };
-  // };
+  const getInstanceMetadata = async (projectId: string) => {
+    return gcpAPI.listAllInstances(projectId);
+  };
 
   /**
    * Calculates number of seconds covered by each individual input using `azure-time-window` value
