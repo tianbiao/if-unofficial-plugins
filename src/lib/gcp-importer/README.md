@@ -2,7 +2,7 @@
 
 > [!NOTE] > `GCP Importer` is an unofficial, not part of the IF standard library. This means the IF core team are not closely monitoring these plugins to keep them up to date. You should do your own research before implementing them!
 
-The GCP importer plugin allows you to provide some basic details about an Azure virtual machine and automatically populate your `manifest` with usage metrics that can then be passed along a plugin pipeline to calculate energy and carbon impacts.
+The GCP importer plugin allows you to provide some basic details about Google virtual machines of onr GCP project and automatically populate your `manifest` with usage metrics that can then be passed along a plugin pipeline to calculate energy and carbon impacts.
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ Create a service account key and download the json file to your local laptop.
 
 ### 4. Add credentials to `.env`
 
-Create a `.env` file in the IF project root directory. This is where you can store your Azure authentication details. Your `.env` file should look as follows:
+Create a `.env` file in the IF project root directory. This is where you can store your GCP authentication details. Your `.env` file should look as follows:
 
 ```txt
 GOOGLE_APPLICATION_CREDENTIALS: <Path to your service account key>
